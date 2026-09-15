@@ -1,0 +1,20 @@
+name: datanest
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - ipykernel
+  - jupyterlab
+  - pandas
+  - matplotlib
+  - plotly
+  - scikit-learn
+  - xgboost       
+  - lightgbm     
+  - streamlit     
+  - requests
+  - python-dotenv
+  - pyarrow
+  - numpy
+  - pip
+  - seaborn
