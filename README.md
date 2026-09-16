@@ -2,6 +2,8 @@
 
 This repository contains a full end-to-end Machine Learning pipeline for predicting future retail sales, developed for the Datanest Data Scientist / Machine Learning Engineer take-home assessment.
 
+The main notebook (Task 1) is [here](work.ipynb), the explanation on deployment (Task 2) is at the end of this README file.
+
 ## Guide on how to run the app
 
 > **Note on Data:** Due to GitHub's 100MB file size limit, the raw training datasets (`train.csv`) are not included in this repository. 
