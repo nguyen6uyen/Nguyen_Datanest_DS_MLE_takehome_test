@@ -42,28 +42,26 @@ streamlit run app.py # -> http://localhost:8501
 
 ## Modeling Approach
 
-The goal of Task 1 is to predict the total amount of products sold in every shop for the upcoming month (November 2015).
-
 ### Key Architectural Decisions
-1. **Model Selection:** Given the panel structure of the data (thousands of individual `(shop, item)` time series) and the constant introduction of new items without historical data, I choose Regression Tree Based model. Since they have the ability to learn global patterns across thousands of disparate timelines and handle missing history via lag features.
-    - The chosen models are: RandomForest, XGBoost, and LightGBM
+1. **Model Selection:** Given the panel structure of the data (thousands of individual `(shop, item)` time series) and the constant introduction of new items without historical data, I chose regression tree-based models, since they have the ability to learn global patterns across thousands of disparate timelines and handle missing history via lag features.
+    - The chosen models are: Random Forest, XGBoost, and LightGBM
 2. **Feature Engineering:** I engineered temporal features (month) and historical sliding windows (Lag 1, Lag 2, Lag 12) to capture short-term momentum and yearly seasonality.
-3. **Data Cleaning & Target Clipping:** Extreme daily anomalies (sales count > 1000 or item's price > 100k) were dropped as outliers. Furthermore, to align with standard retail forecasting metrics and prevent the Root Mean Square Error (RMSE) from being exponentially skewed by rare wholesale orders (0.1% outliers), the target variable `item_cnt_month` was clipped to a maximum of 21 according to the quantiles analysis (that 99.9% of all monthly item sales are 21.0 units or less)
-4. **Time-Series Cross Validation:** I use month 0 to 32 as a train set, and month 33 a a validation set. Hyperparameters were tuned based on the train set and validated through the validation set.
-
+3. **Data Cleaning & Target Clipping:** Extreme daily anomalies (sales count > 1000 or item price > 100k) were dropped as outliers. Furthermore, to align with standard retail forecasting metrics and prevent the Root Mean Square Error (RMSE) from being exponentially skewed by rare wholesale orders (0.1% outliers), the target variable `item_cnt_month` was clipped to a maximum of 21, based on the quantile analysis showing that 99.9% of all monthly item sales are 21.0 units or fewer.
+4. **Time-Series Cross-Validation:** I used months 0 to 32 as the train set, and month 33 as the validation set. Hyperparameters were tuned on the train set and validated using the validation set. After validation, I fit the optimized model on the full original train set (33 blocks) to get the best performance.
+5. **Prediction:** Finally, I applied the optimized model to predict the test set and saved the result to `forecast.csv`.
 ---
 
 ## Deployment Patterns & Web App
 
-The goal of Task 2 is to deploy this model to an internal web page where non-technical stakeholders (e.g., Supply Chain Managers) can input an `item_id` and receive the November 2015 forecast.
-
 ### Deployment Pattern Analysis
-When deploying a machine learning model to a web application, there are two primary architectures: **Real-Time Inference** and **Batch Prediction**.
 
-**1. Real-Time Inference (Not Recommended Here)**
-*   *How it works:* The user clicks "Search", the web app sends the `item_id` to an API, the server loads the heavy XGBoost model into RAM, gathers the real-time lag features from a database, runs `.predict()`, and returns the answer.
-*   *Why it's bad for this use-case:* Retail forecasts for an upcoming month are static. The answer for "How many items will we sell next month?" does not change by the second. Running a heavy XGBoost model in real-time for every single user search is computationally expensive, slow, and completely unnecessary.
+For this project, there are 2 primary deployment pattern that I think off: **Real-Time** and **Batch Prediction**.
 
-**2. Batch Prediction (The Chosen Implementation)**
-*   *How it works:* At the end of the month, a scheduled data pipeline (e.g., Apache Airflow) runs the XGBoost model *once* on the entire inventory. It generates the predictions for all items and saves them into a lightweight database or CSV (`forecast.csv`). The web app simply queries this file.
-*   *Why it's the perfect fit:* It is infinitely cheaper, faster, and more robust. If the ML model crashes during inference, the users never notice because the web app is decoupled from the ML pipeline.
+
+**1. Real-Time**
+*   *How it works:* The user clicks "Search," the web app sends the `item_id` to an API, the server loads the model into RAM, gathers the real-time lag features from a database, runs `.predict()`, and returns the answer.
+*   *Why it is not used here:* Retail forecasts for an upcoming month are static. The answer to "How many items will we sell next month?" does not change by the second or by the day, because stores usually order stock weeks or months in advance (not to mention holiday seasons, where stock has to be ordered even further ahead). Running a heavy XGBoost model in real time for every single user search is computationally expensive, slow, and completely unnecessary, especially when our training dataset (after reconstruction) is near 10 million rows.
+
+**2. Batch Prediction (my implementation)**
+*   *How it works:* At the end of the month, a scheduled data pipeline runs the XGBoost model *once* on the entire inventory. It generates the predictions for all items and saves them into a lightweight database or CSV (e.g., `forecast.csv`). The web app simply queries this file.
+*   *Why it is the perfect fit here:* It is infinitely cheaper, faster, and more robust. If the ML model crashes during inference, users never notice, because the web app uses data directly from the CSV rather than generating it from the model.
