@@ -5,16 +5,16 @@ dependencies:
   - python=3.11
   - ipykernel
   - jupyterlab
-  - pandas
+  - pandas<=2.1.4    
   - matplotlib
   - plotly
   - scikit-learn
   - xgboost       
   - lightgbm     
-  - streamlit     
+  - streamlit<=1.31.0 
   - requests
   - python-dotenv
-  - pyarrow
+  - pyarrow<=14.0.1
   - numpy
   - pip
   - seaborn
