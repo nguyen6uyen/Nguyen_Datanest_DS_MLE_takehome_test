@@ -4,6 +4,9 @@ This repository contains a full end-to-end Machine Learning pipeline for predict
 
 ## Guide on how to run the app
 
+> **Note on Data:** Due to GitHub's 100MB file size limit, the raw training datasets (`train.csv`) are not included in this repository. 
+> - To run the **Streamlit Web App** (Step 6), you do not need the training data! The required `forecast.csv` is already included.
+> - To run the **Jupyter Notebook** (Step 5), please download the original dataset from this [Google Drive](https://drive.google.com/drive/folders/1UO1sUyfTa17fLDNUCuXp-2Ocuk7PB0Dz?usp=drive_link) and place it in the `data/` folder in the root directory before running.
 
 1. Clone down the repo
 
