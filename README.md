@@ -67,3 +67,6 @@ For this project, there are 2 primary deployment pattern that I think off: **Rea
 **2. Batch Prediction (my implementation)**
 *   *How it works:* At the end of the month, a scheduled data pipeline runs the XGBoost model *once* on the entire inventory. It generates the predictions for all items and saves them into a lightweight database or CSV (e.g., `forecast.csv`). The web app simply queries this file.
 *   *Why it is the perfect fit here:* It is infinitely cheaper, faster, and more robust. If the ML model crashes during inference, users never notice, because the web app uses data directly from the CSV rather than generating it from the model.
+
+### Framework Selection: Streamlit
+For the frontend, I chose **Streamlit**. Since this is an internal tool, a complex live deployment is not necessary and would only increase costs and time. Streamlit is the perfect fit because it is very simple and easy to understand and alter. It is also built directly in Python. There is no need to write any complex JavaScript or Java, allowing Data Scientists to rapidly build and deploy a beautiful, interactive dashboard that quick and cheap, especially for internal use like this.
