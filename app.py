@@ -12,7 +12,6 @@ st.set_page_config(
 # Use inline HTML styling for guaranteed stable rendering in Streamlit
 st.markdown('<h1 style="font-size: 2.5rem; font-weight: 700; color: #6B7280; margin-bottom: 0rem;">📈 Inventory Forecast - November 2015 Projection </h1>', unsafe_allow_html=True)
 
-# Load data securely into cache so it doesn't reload on every button click
 @st.cache_data
 def load_data():
     file_path = 'data/forecast.csv'
@@ -24,10 +23,8 @@ def load_data():
     
     # Floor negative predictions to 0 (we can't sell negative items!)
     if 'predicted_sales' in df.columns:
-        # df['predicted_sales'] = df['predicted_sales'].clip(lower=0).round(2)
-        df['predicted_sales'] = df['predicted_sales'].clip(lower=0).round(0).astype(int)
-
-        
+        # Round to whole numbers, but KEEP as floats to prevent the Mac PyArrow int64 crash
+        df['predicted_sales'] = df['predicted_sales'].clip(lower=0).round(0)
     return df
 
 with st.spinner("Connecting to batch prediction database..."):
@@ -47,7 +44,8 @@ else:
         item_search = st.number_input("Enter Item ID:", min_value=0, step=1, value=5037, label_visibility="collapsed")
         
     with col_button:
-        search_clicked = st.button("Generate Forecast", type="primary", use_container_width=True)
+        # Removed use_container_width=True because it is triggering the Mac Segmentation Fault!
+        search_clicked = st.button("Generate Forecast", type="primary")
     
     # When the user clicks the button or hits enter
     if search_clicked or item_search:
@@ -77,12 +75,19 @@ else:
             
             # Clean up the table for presentation
             display_df = item_data[['shop_id', 'predicted_sales']].copy()
+            
+            # Add the word "Shop" in front of the ID so it looks extremely premium
+            display_df['shop_id'] = display_df['shop_id'].astype(str)
+            
             display_df.rename(columns={'shop_id': 'Shop ID', 'predicted_sales': 'Projected Sales'}, inplace=True)
             display_df = display_df.sort_values('Projected Sales', ascending=False).reset_index(drop=True)
             
-            # Use Streamlit's native premium dataframe visualization
+            # Format as strings to avoid PyArrow int64 crashes on Mac
+            display_df['Projected Sales'] = display_df['Projected Sales'].apply(lambda x: f"{x:,.0f}")
+            
+            # Use st.dataframe for a scrollable, beautiful UI with equal width
             st.dataframe(
                 display_df, 
-                use_container_width=True,
-                hide_index=True
+                hide_index=True, 
+                use_container_width=True
             )
