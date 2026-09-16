@@ -27,9 +27,9 @@ conda env create -f environment.yml
 conda activate datanest
 ```
 
-5. Run model
+5. Run model (Executes the notebook headlessly to generate forecast.csv)
 ```bash
-jupyter notebook work.ipynb
+jupyter nbconvert --to notebook --execute --inplace work.ipynb
 ```
 
 6. Run app
